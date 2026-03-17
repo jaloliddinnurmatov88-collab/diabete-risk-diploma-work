@@ -102,7 +102,7 @@ hr {border: none; border-top: 1px solid rgba(16,24,40,0.10); margin: 12px 0;}
 .reco-high { border-left: 6px solid rgba(245,158,11,0.9); background: rgba(245,158,11,0.08); }
 .reco-vhigh{ border-left: 6px solid rgba(239,68,68,0.9);  background: rgba(239,68,68,0.08); }
 
-/* ✅ Streamlit container(border=True) ni "card" ko‘rinishiga keltiramiz */
+/* Streamlit container(border=True) ni "card" ko‘rinishiga keltiramiz */
 div[data-testid="stVerticalBlockBorderWrapper"]{
     background: rgba(255,255,255,0.92) !important;
     border: 1px solid rgba(16,24,40,0.10) !important;
@@ -178,8 +178,14 @@ with left:
                 "Chekish tarixi (smoking_history)",
                 ["never", "No Info", "current", "former", "ever", "not current"]
             )
-            hypertension = st.selectbox("Gipertoniya (hypertension)", [0, 1])
-            heart_disease = st.selectbox("Yurak kasalligi (heart_disease)", [0, 1])
+
+            # ✅ UI’da "Bor/Yo‘q", lekin modelga 0/1 uzatiladi
+            hypertension_label = st.selectbox("Gipertoniya (hypertension)", ["❌ Yo‘q", "✅ Bor"])
+            heart_disease_label = st.selectbox("Yurak kasalligi (heart_disease)", ["❌ Yo‘q", "✅ Bor"])
+
+            hypertension = 1 if hypertension_label.endswith("Bor") else 0
+            heart_disease = 1 if heart_disease_label.endswith("Bor") else 0
+
             glucose = st.number_input("blood_glucose_level", min_value=50.0, max_value=400.0, value=110.0)
 
         st.write("")
