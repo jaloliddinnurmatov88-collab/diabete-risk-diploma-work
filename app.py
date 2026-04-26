@@ -6,7 +6,7 @@ MODEL_PATH = "diabetes_model_final.pkl"
 FINAL_THRESHOLD = 0.9
 
 st.set_page_config(
-    page_title="Diabetes Risk Assessment",
+    page_title="Diabet riskini baholash",
     page_icon="🩺",
     layout="wide"
 )
@@ -85,7 +85,7 @@ div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {
 
 hr {border: none; border-top: 1px solid rgba(16,24,40,0.10); margin: 12px 0;}
 
-/* Recommendation card */
+/* Tavsiya card */
 .reco {
     border-radius: 14px;
     padding: 14px 14px;
@@ -116,48 +116,50 @@ footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------- Load model --------------------
+# -------------------- Model yuklash --------------------
 @st.cache_resource
 def load_model():
     return joblib.load(MODEL_PATH)
 
 model = load_model()
 
-# -------------------- Risk categories --------------------
+# -------------------- Risk darajalari (4 ta) + Tavsiya --------------------
 def risk_bucket(p: float):
+    # Past
     if p < 0.4:
-        return (
-            "🟢 Past risk", "pill-low", "reco-low",
-            "✅ Recommendation",
-            "Maintain a healthy lifestyle: balanced nutrition, regular physical activity, weight control, and routine check-ups."
-        )
+        return ("🟢 Past risk", "pill-low", "reco-low",
+                "✅ Tavsiya",
+                "Profilaktika va sog‘lom turmush tarzini davom ettiring: me’yoriy ovqatlanish, "
+                "jismoniy faollik, vazn nazorati va davriy tekshiruvlar.")
+    # O‘rta
     elif p < 0.6:
-        return (
-            "🔵 Medium risk", "pill-mid", "reco-mid",
-            "📝 Recommendation",
-            "Your risk is moderate. Improve nutrition and physical activity, manage weight, and consider re-checking (HbA1c/glucose) within 1–3 months and consulting a doctor."
-        )
+        return ("🔵 O‘rta risk", "pill-mid", "reco-mid",
+                "📝 Tavsiya",
+                "Risk o‘rta darajada. Ovqatlanish va jismoniy faollikni yaxshilang, vaznni nazorat qiling. "
+                "1–3 oy ichida qayta tekshiruv (HbA1c/glyukoza) va shifokor maslahati tavsiya etiladi.")
+    # Yuqori
     elif p < 0.9:
-        return (
-            "🟠 High risk", "pill-high", "reco-high",
-            "🧑‍⚕️ Recommendation",
-            "Your risk is high. It is recommended to consult a doctor and undergo laboratory tests such as HbA1c and blood glucose in the near future."
-        )
+        return ("🟠 Yuqori risk", "pill-high", "reco-high",
+                "🧑‍⚕️ Tavsiya",
+                "Risk yuqori. Shifokor ko‘rigidan o‘tish tavsiya etiladi. "
+                "Laborator tekshiruvlar (HbA1c, qon glyukozasi)ni yaqin muddatda topshiring. "
+                "Turmush tarzini (ovqatlanish, faollik) keskinroq yaxshilash muhim.")
+    # Juda yuqori
     else:
-        return (
-            "🔴 Very high risk", "pill-vhigh", "reco-vhigh",
-            "🚨 Recommendation",
-            "A very high risk has been detected. Please consult a doctor as soon as possible and do not delay laboratory testing. Further medical evaluation may be required."
-        )
+        return ("🔴 Juda yuqori risk", "pill-vhigh", "reco-vhigh",
+                "🚨 Tavsiya",
+                "Juda yuqori risk aniqlandi. Shifokorga tezroq murojaat qiling va laborator tekshiruvlarni "
+                "kechiktirmang (HbA1c, qon glyukozasi va boshqalar). Zarur bo‘lsa davolash rejasi shifokor "
+                "tomonidan belgilanadi.")
 
 # -------------------- Header --------------------
-st.markdown('<div class="title">🩺 Diabetes Risk Assessment (ML)</div>', unsafe_allow_html=True)
+st.markdown('<div class="title">🩺 Diabet riskini ML orqali baholash</div>', unsafe_allow_html=True)
 st.markdown(
-    f'<div class="subtitle">Disclaimer: this system <b>does not provide a diagnosis</b>; it estimates probability (risk). '
+    f'<div class="subtitle">Eslatma: bu tizim <b>tashxis qo‘ymaydi</b>, faqat ehtimollik (risk) baholaydi. '
     f'Final threshold: <span class="badge">{FINAL_THRESHOLD}</span></div>',
     unsafe_allow_html=True
 )
-st.caption("⚙️ Final class: if P ≥ 0.9 → 1 (very high probability), otherwise 0.")
+st.caption("⚙️ Final klass: model P ≥ 0.9 bo‘lsa — 1 (juda yuqori ehtimol), aks holda 0.")
 st.write("")
 
 # -------------------- Layout --------------------
@@ -165,35 +167,40 @@ left, right = st.columns([1.05, 0.95], gap="large")
 
 with left:
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("📌 Enter patient data")
+    st.subheader("📌 Ma’lumotlarni kiriting")
 
     c1, c2 = st.columns(2)
 
     with c1:
-        gender = st.selectbox("Gender", ["Female", "Male"])
-        age = st.number_input("Age", min_value=1, max_value=120, value=35)
+        gender = st.selectbox("Jins", ["Female", "Male"])
+        age = st.number_input("Yosh", min_value=1, max_value=120, value=35)
         bmi = st.number_input("BMI", min_value=10.0, max_value=60.0, value=25.0)
+
+        # ✅ Terminological word (keep as-is)
         hba1c = st.number_input("HbA1c_level", min_value=3.0, max_value=15.0, value=5.5)
 
     with c2:
         smoking_history = st.selectbox(
-            "Smoking history",
+            "Chekish tarixi",
             ["never", "No Info", "current", "former", "ever", "not current"]
         )
-        hypertension_text = st.selectbox("Hypertension", ["No", "Yes"])
-        heart_disease_text = st.selectbox("Heart disease", ["No", "Yes"])
+
+        hypertension_text = st.selectbox("Gipertoniya", ["Yo‘q", "Bor"])
+        heart_disease_text = st.selectbox("Yurak kasalligi", ["Yo‘q", "Bor"])
+
+        # ✅ Terminological word (keep as-is)
         glucose = st.number_input("Blood glucose level", min_value=50.0, max_value=400.0, value=110.0)
 
-    hypertension = 1 if hypertension_text == "Yes" else 0
-    heart_disease = 1 if heart_disease_text == "Yes" else 0
+    hypertension = 1 if hypertension_text == "Bor" else 0
+    heart_disease = 1 if heart_disease_text == "Bor" else 0
 
     st.write("")
-    run = st.button("🔍 Assess risk")
+    run = st.button("🔍 Baholash")
     st.markdown('</div>', unsafe_allow_html=True)
 
 with right:
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("📊 Result")
+    st.subheader("📊 Natija")
 
     if run:
         input_df = pd.DataFrame([{
@@ -220,11 +227,11 @@ with right:
 
         st.markdown("<hr/>", unsafe_allow_html=True)
 
-        st.subheader("📌 Final conclusion")
+        st.subheader("📌 Yakuniy xulosa")
         if final_class == 1:
-            st.error(f"🚨 Final class: 1 (P ≥ {FINAL_THRESHOLD}) — very high probability")
+            st.error(f"🚨 Final klass: 1 (P ≥ {FINAL_THRESHOLD}) — juda yuqori ehtimol")
         else:
-            st.success(f"✅ Final class: 0 (P < {FINAL_THRESHOLD}) — screening / monitoring")
+            st.success(f"✅ Final klass: 0 (P < {FINAL_THRESHOLD}) — kuzatish/skrining")
 
         st.markdown(f"""
         <div class="reco {reco_class}">
@@ -234,14 +241,14 @@ with right:
         """, unsafe_allow_html=True)
 
         st.markdown("<hr/>", unsafe_allow_html=True)
-        st.markdown("**Entered data:**")
+        st.markdown("**Kiritilgan ma’lumotlar (tekshiruv):**")
         st.dataframe(input_df, use_container_width=True)
 
     else:
-        st.info("Enter patient data on the left and click **Assess risk**.")
-        st.markdown("<div class='small-note'>Result includes probability (P), risk level, final class, and recommendation.</div>", unsafe_allow_html=True)
+        st.info("Chap tomonda ma’lumotlarni kiriting va **Baholash** tugmasini bosing.")
+        st.markdown("<div class='small-note'>Natija: ehtimollik (P), risk darajasi, final klass va tavsiya.</div>", unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
 st.write("")
-st.caption("© Diploma project: Classification of medical data using AI.")
+st.caption("© Diplom loyihasi: Tibbiy ma’lumotlarni AI orqali klassifikatsiya qilish (Clinical ML modul).")
