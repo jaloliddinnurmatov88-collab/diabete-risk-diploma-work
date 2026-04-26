@@ -11,7 +11,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# -------------------- CSS (Light / Professional + container-card fix) --------------------
+# -------------------- CSS --------------------
 st.markdown("""
 <style>
 .stApp {
@@ -22,6 +22,14 @@ st.markdown("""
 
 h1, h2, h3, h4 { color: #101828; }
 p, li, span, label { color: #344054; }
+
+.card {
+    background: rgba(255,255,255,0.92);
+    border: 1px solid rgba(16,24,40,0.10);
+    border-radius: 18px;
+    padding: 18px 18px 14px 18px;
+    box-shadow: 0 12px 30px rgba(16,24,40,0.08);
+}
 
 .title {
     font-size: 34px;
@@ -72,6 +80,7 @@ div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {
     margin: 0;
     color: #101828;
 }
+
 .small-note { opacity: 0.85; font-size: 13px; color:#475467; }
 
 hr {border: none; border-top: 1px solid rgba(16,24,40,0.10); margin: 12px 0;}
@@ -102,15 +111,6 @@ hr {border: none; border-top: 1px solid rgba(16,24,40,0.10); margin: 12px 0;}
 .reco-high { border-left: 6px solid rgba(245,158,11,0.9); background: rgba(245,158,11,0.08); }
 .reco-vhigh{ border-left: 6px solid rgba(239,68,68,0.9);  background: rgba(239,68,68,0.08); }
 
-/* Streamlit container(border=True) styled as a "card" */
-div[data-testid="stVerticalBlockBorderWrapper"]{
-    background: rgba(255,255,255,0.92) !important;
-    border: 1px solid rgba(16,24,40,0.10) !important;
-    border-radius: 18px !important;
-    padding: 18px 18px 14px 18px !important;
-    box-shadow: 0 12px 30px rgba(16,24,40,0.08) !important;
-}
-
 header {visibility: hidden;}
 footer {visibility: hidden;}
 </style>
@@ -123,28 +123,32 @@ def load_model():
 
 model = load_model()
 
-# -------------------- Risk buckets (4 levels) + Recommendations --------------------
+# -------------------- Risk categories --------------------
 def risk_bucket(p: float):
     if p < 0.4:
-        return ("🟢 Low risk", "pill-low", "reco-low",
-                "✅ Recommendation",
-                "Maintain a healthy lifestyle: balanced diet, regular physical activity, weight management, "
-                "and periodic check-ups.")
+        return (
+            "🟢 Past risk", "pill-low", "reco-low",
+            "✅ Recommendation",
+            "Maintain a healthy lifestyle: balanced nutrition, regular physical activity, weight control, and routine check-ups."
+        )
     elif p < 0.6:
-        return ("🔵 Medium risk", "pill-mid", "reco-mid",
-                "📝 Recommendation",
-                "Your risk is moderate. Improve nutrition and physical activity, manage weight, "
-                "and consider re-checking (HbA1c/glucose) within 1–3 months and consulting a doctor.")
+        return (
+            "🔵 Medium risk", "pill-mid", "reco-mid",
+            "📝 Recommendation",
+            "Your risk is moderate. Improve nutrition and physical activity, manage weight, and consider re-checking (HbA1c/glucose) within 1–3 months and consulting a doctor."
+        )
     elif p < 0.9:
-        return ("🟠 High risk", "pill-high", "reco-high",
-                "🧑‍⚕️ Recommendation",
-                "Your risk is high. It is recommended to consult a doctor and complete laboratory tests "
-                "(HbA1c, blood glucose) soon. Lifestyle improvement is strongly advised.")
+        return (
+            "🟠 High risk", "pill-high", "reco-high",
+            "🧑‍⚕️ Recommendation",
+            "Your risk is high. It is recommended to consult a doctor and undergo laboratory tests such as HbA1c and blood glucose in the near future."
+        )
     else:
-        return ("🔴 Very high risk", "pill-vhigh", "reco-vhigh",
-                "🚨 Recommendation",
-                "Very high risk detected. Please see a doctor as soon as possible and do not delay laboratory tests "
-                "(HbA1c, blood glucose, etc.). Treatment decisions should be made by a healthcare professional.")
+        return (
+            "🔴 Very high risk", "pill-vhigh", "reco-vhigh",
+            "🚨 Recommendation",
+            "A very high risk has been detected. Please consult a doctor as soon as possible and do not delay laboratory testing. Further medical evaluation may be required."
+        )
 
 # -------------------- Header --------------------
 st.markdown('<div class="title">🩺 Diabetes Risk Assessment (ML)</div>', unsafe_allow_html=True)
@@ -160,84 +164,84 @@ st.write("")
 left, right = st.columns([1.05, 0.95], gap="large")
 
 with left:
-    with st.container(border=True):
-        st.subheader("📌 Enter patient data")
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("📌 Enter patient data")
 
-        c1, c2 = st.columns(2)
+    c1, c2 = st.columns(2)
 
-        with c1:
-            gender = st.selectbox("Gender (gender)", ["Female", "Male"])
-            age = st.number_input("Age (age)", min_value=1, max_value=120, value=35)
-            bmi = st.number_input("BMI", min_value=10.0, max_value=60.0, value=25.0)
-            hba1c = st.number_input("HbA1c_level", min_value=3.0, max_value=15.0, value=5.5)
+    with c1:
+        gender = st.selectbox("Gender", ["Female", "Male"])
+        age = st.number_input("Age", min_value=1, max_value=120, value=35)
+        bmi = st.number_input("BMI", min_value=10.0, max_value=60.0, value=25.0)
+        hba1c = st.number_input("HbA1c_level", min_value=3.0, max_value=15.0, value=5.5)
 
-        with c2:
-            smoking_history = st.selectbox(
-                "Smoking history (smoking_history)",
-                ["never", "No Info", "current", "former", "ever", "not current"]
-            )
+    with c2:
+        smoking_history = st.selectbox(
+            "Smoking history",
+            ["never", "No Info", "current", "former", "ever", "not current"]
+        )
+        hypertension_text = st.selectbox("Hypertension", ["No", "Yes"])
+        heart_disease_text = st.selectbox("Heart disease", ["No", "Yes"])
+        glucose = st.number_input("Blood glucose level", min_value=50.0, max_value=400.0, value=110.0)
 
-            # UI: Yes/No, Model: 1/0
-            hypertension_label = st.selectbox("Hypertension (hypertension)", ["❌ No", "✅ Yes"])
-            heart_disease_label = st.selectbox("Heart disease (heart_disease)", ["❌ No", "✅ Yes"])
+    hypertension = 1 if hypertension_text == "Yes" else 0
+    heart_disease = 1 if heart_disease_text == "Yes" else 0
 
-            hypertension = 1 if hypertension_label.endswith("Yes") else 0
-            heart_disease = 1 if heart_disease_label.endswith("Yes") else 0
-
-            glucose = st.number_input("Blood glucose level (blood_glucose_level)", min_value=50.0, max_value=400.0, value=110.0)
-
-        st.write("")
-        run = st.button("🔍 Assess risk")
+    st.write("")
+    run = st.button("🔍 Assess risk")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with right:
-    with st.container(border=True):
-        st.subheader("📊 Result")
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("📊 Result")
 
-        if run:
-            input_df = pd.DataFrame([{
-                "gender": gender,
-                "age": float(age),
-                "hypertension": int(hypertension),
-                "heart_disease": int(heart_disease),
-                "smoking_history": smoking_history,
-                "bmi": float(bmi),
-                "HbA1c_level": float(hba1c),
-                "blood_glucose_level": float(glucose)
-            }])
+    if run:
+        input_df = pd.DataFrame([{
+            "gender": gender,
+            "age": float(age),
+            "hypertension": int(hypertension),
+            "heart_disease": int(heart_disease),
+            "smoking_history": smoking_history,
+            "bmi": float(bmi),
+            "HbA1c_level": float(hba1c),
+            "blood_glucose_level": float(glucose)
+        }])
 
-            proba = float(model.predict_proba(input_df)[0, 1])
-            final_class = int(proba >= FINAL_THRESHOLD)
+        proba = float(model.predict_proba(input_df)[0, 1])
+        final_class = int(proba >= FINAL_THRESHOLD)
 
-            risk_name, pill_class, reco_class, reco_title, reco_text = risk_bucket(proba)
+        risk_name, pill_class, reco_class, reco_title, reco_text = risk_bucket(proba)
 
-            st.markdown(f"<p class='big-number'>{proba:.4f}</p>", unsafe_allow_html=True)
-            st.markdown(f"<span class='badge {pill_class}'>Risk: {risk_name}</span>", unsafe_allow_html=True)
+        st.markdown(f"<p class='big-number'>{proba:.4f}</p>", unsafe_allow_html=True)
+        st.markdown(f"<span class='badge {pill_class}'>Risk: {risk_name}</span>", unsafe_allow_html=True)
 
-            st.write("")
-            st.progress(min(max(proba, 0.0), 1.0))
+        st.write("")
+        st.progress(min(max(proba, 0.0), 1.0))
 
-            st.markdown("<hr/>", unsafe_allow_html=True)
+        st.markdown("<hr/>", unsafe_allow_html=True)
 
-            st.subheader("📌 Final conclusion")
-            if final_class == 1:
-                st.error(f"🚨 Final class: 1 (P ≥ {FINAL_THRESHOLD}) — very high probability")
-            else:
-                st.success(f"✅ Final class: 0 (P < {FINAL_THRESHOLD}) — screening / monitoring")
-
-            st.markdown(f"""
-            <div class="reco {reco_class}">
-              <div class="reco-title">{reco_title}</div>
-              <p class="reco-text">{reco_text}</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-            st.markdown("<hr/>", unsafe_allow_html=True)
-            st.markdown("**Entered data (for verification):**")
-            st.dataframe(input_df, use_container_width=True)
-
+        st.subheader("📌 Final conclusion")
+        if final_class == 1:
+            st.error(f"🚨 Final class: 1 (P ≥ {FINAL_THRESHOLD}) — very high probability")
         else:
-            st.info("Enter the data on the left and click **Assess risk**.")
-            st.markdown("<div class='small-note'>Output: probability (P), risk level, final class, and recommendation.</div>", unsafe_allow_html=True)
+            st.success(f"✅ Final class: 0 (P < {FINAL_THRESHOLD}) — screening / monitoring")
+
+        st.markdown(f"""
+        <div class="reco {reco_class}">
+          <div class="reco-title">{reco_title}</div>
+          <p class="reco-text">{reco_text}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<hr/>", unsafe_allow_html=True)
+        st.markdown("**Entered data:**")
+        st.dataframe(input_df, use_container_width=True)
+
+    else:
+        st.info("Enter patient data on the left and click **Assess risk**.")
+        st.markdown("<div class='small-note'>Result includes probability (P), risk level, final class, and recommendation.</div>", unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.write("")
-st.caption("© Diploma project: AI-based classification of medical data (Clinical ML module).")
+st.caption("© Diploma project: Classification of medical data using AI.")
